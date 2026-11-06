@@ -86,8 +86,8 @@ describe('renderer/utils/system/native.ts', () => {
         ['comment', 'Bot', 'bot-comment'],
         ['APPROVED', 'User', 'pr-approved'],
         ['CHANGES_REQUESTED', 'User', 'changes-requested'],
-        ['DISMISSED', 'User', 'tekmetric-git'],
-        ['COMMENTED', 'User', 'tekmetric-git'],
+        ['DISMISSED', 'User', 'review-dismissed'],
+        ['COMMENTED', 'User', 'review-commented'],
       ] as const)('uses the right icon for a %s by a %s', (kind, type, icon) => {
         const payload = buildNativeNotificationPayload(
           pr({
@@ -160,8 +160,17 @@ describe('renderer/utils/system/native.ts', () => {
         expect(payload.icon).toBe(icon);
       });
 
-      it('uses the plain Tekmetric icon for the stock banner', () => {
-        expect(buildNativeNotificationPayload(notification).icon).toBe('tekmetric-git');
+      it('uses the bell for the stock banner', () => {
+        expect(buildNativeNotificationPayload(notification).icon).toBe('notification');
+      });
+
+      it.each(['mention', 'team_mention'] as const)('uses the @ icon for a %s', (code) => {
+        const payload = buildNativeNotificationPayload({
+          ...notification,
+          reason: { ...notification.reason, code },
+        });
+
+        expect(payload.icon).toBe('mentioned');
       });
     });
 
@@ -236,6 +245,7 @@ describe('renderer/utils/system/native.ts', () => {
           id: NATIVE_NOTIFICATION_SUMMARY_ID,
           title: 'Gitify',
           body: `You have ${MAX_INDIVIDUAL_NATIVE_NOTIFICATIONS + 1} notifications`,
+          icon: 'summary',
         }),
       );
       expect(published[0]).not.toHaveProperty('actionLabel');

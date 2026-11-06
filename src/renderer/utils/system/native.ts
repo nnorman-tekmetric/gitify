@@ -58,16 +58,21 @@ function describeActivity(kind: GitifyActivityKind, actor: string): string {
   }
 }
 
+/**
+ * The badge icon for a comment or review.
+ */
 function activityIcon(kind: GitifyActivityKind, byBot: boolean): NativeNotificationIcon {
   switch (kind) {
     case 'APPROVED':
       return 'pr-approved';
     case 'CHANGES_REQUESTED':
       return 'changes-requested';
-    case 'comment':
-      return byBot ? 'bot-comment' : 'issue-comment';
+    case 'DISMISSED':
+      return 'review-dismissed';
+    case 'COMMENTED':
+      return 'review-commented';
     default:
-      return 'tekmetric-git';
+      return byBot ? 'bot-comment' : 'issue-comment';
   }
 }
 
@@ -195,13 +200,14 @@ export function buildNativeNotificationPayload(
       ? `${notification.display.title} (${identifier})`
       : notification.display.title;
 
+  const reason = notification.reason.code;
   return {
     id,
     title: notification.repository.fullName,
     subtitle: context || undefined,
     body,
     actionLabel,
-    icon: 'tekmetric-git',
+    icon: reason === 'mention' || reason === 'team_mention' ? 'mentioned' : 'notification',
   };
 }
 
@@ -226,7 +232,7 @@ export function raiseNativeNotification(
       body: i18n.t('native.summary_body_other', 'You have {{count}} notifications', {
         count: notifications.length,
       }),
-      icon: 'tekmetric-git',
+      icon: 'summary',
     };
 
     window.gitify.nativeNotifications.show(summary);

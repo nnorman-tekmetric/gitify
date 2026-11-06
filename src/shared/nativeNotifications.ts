@@ -5,11 +5,12 @@ export const NATIVE_NOTIFICATION_SUMMARY_ID = 'summary';
 
 /**
  * Badge icons a native notification can attach. Each name is a PNG in
- * `assets/images/notifications/`. The main process only accepts these names,
- * so the renderer can never point a notification at an arbitrary file.
+ * `assets/images/notifications/`, drawn from GitHub's Octicons (MIT) by
+ * `scripts/notification-icons/build.mjs`.
+ * The main process only accepts these names, so the renderer can never point
+ * a notification at an arbitrary file.
  */
 export const NATIVE_NOTIFICATION_ICONS = [
-  'tekmetric-git',
   'issue-comment',
   'bot-comment',
   'pr-approved',
@@ -19,6 +20,11 @@ export const NATIVE_NOTIFICATION_ICONS = [
   'pr-closed-without-merge',
   'ci-checks-passed',
   'ci-checks-failed',
+  'review-commented',
+  'review-dismissed',
+  'mentioned',
+  'notification',
+  'summary',
 ] as const;
 
 export type NativeNotificationIcon = (typeof NATIVE_NOTIFICATION_ICONS)[number];
