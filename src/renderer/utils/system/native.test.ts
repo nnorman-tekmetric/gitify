@@ -99,12 +99,12 @@ describe('renderer/utils/system/native.ts', () => {
         expect(payload.icon).toBe(icon);
       });
 
-      it('treats an old comment on a review request as the review request', () => {
+      it('shows a review request when no comment or review triggered it', () => {
         const payload = buildNativeNotificationPayload(
           pr(
             {
               author: { ...notification.subject.user!, login: 'alex-dev' },
-              latestActivity: { kind: 'comment', text: 'old', at: '2017-05-19T10:00:00Z' },
+              latestActivity: undefined,
             },
             { code: 'review_requested', title: 'Review Requested' },
           ),

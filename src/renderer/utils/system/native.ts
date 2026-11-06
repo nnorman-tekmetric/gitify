@@ -35,14 +35,6 @@ export function toBannerExcerpt(text: string): string {
   return `${singleLine.slice(0, MAX_NATIVE_BODY_LENGTH - 1).trimEnd()}…`;
 }
 
-/**
- * A comment or review counts as what triggered the notification only when it
- * happened this close to the notification's own update time. GitHub's
- * notification reason says why you follow a thread, not what just happened,
- * so this is how a review request is told apart from a later comment.
- */
-export const ACTIVITY_MATCH_WINDOW_MS = 3 * 60 * 1000;
-
 function describeActivity(kind: GitifyActivityKind, actor: string): string {
   switch (kind) {
     case 'APPROVED':
@@ -76,24 +68,6 @@ function activityIcon(kind: GitifyActivityKind, byBot: boolean): NativeNotificat
   }
 }
 
-/**
- * Whether the latest comment or review is what this notification is about.
- *
- * @param notification - The notification to check.
- * @returns `true` when the activity happened within {@link ACTIVITY_MATCH_WINDOW_MS}.
- */
-export function isActivityCurrent(notification: GitifyNotification): boolean {
-  const activity = notification.subject.latestActivity;
-  if (!activity) {
-    return false;
-  }
-  if (!activity.at) {
-    return true;
-  }
-  const distance = Math.abs(Date.parse(activity.at) - Date.parse(notification.updatedAt));
-  return Number.isNaN(distance) || distance <= ACTIVITY_MATCH_WINDOW_MS;
-}
-
 function subjectLabel(notification: GitifyNotification): string {
   const number = notification.subject.number;
   const where = number
@@ -107,7 +81,7 @@ function subjectLabel(notification: GitifyNotification): string {
  *
  * Banners read, in order of preference:
  * - CI: "CI failed: <workflow>" / "CI passed: <workflow>" with the branch.
- * - A comment or review that just happened: "@actor commented" /
+ * - The comment or review this notification is about: "@actor commented" /
  *   "@actor approved", then "repo#123 · PR title", then its text.
  * - A review request: "Your review was requested", then the PR and its author.
  * - A merged or closed PR: "PR merged" / "PR closed without merging".
@@ -148,7 +122,9 @@ export function buildNativeNotificationPayload(
     }
   }
 
-  if (activity && actor && isActivityCurrent(notification)) {
+  // The forge only sets latestActivity when that comment or review is what
+  // this notification is about.
+  if (activity && actor) {
     return {
       id,
       title: describeActivity(activity.kind, `@${actor}`),

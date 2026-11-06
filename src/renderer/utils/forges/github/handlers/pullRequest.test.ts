@@ -22,8 +22,10 @@ import type {
   PullRequestReviewState,
 } from '../graphql/generated/graphql';
 import {
+  ACTIVITY_MATCH_WINDOW_MS,
   getCheckSummary,
   getClosestPullRequestActivity,
+  isCurrentActivity,
   getReviewRequestTypes,
   getPullRequestReviewers,
   pullRequestHandler,
@@ -321,6 +323,34 @@ describe('renderer/utils/notifications/handlers/pullRequest.ts', () => {
         reactionsCount: 0,
         reactionGroups: noReactionGroups,
       } satisfies Partial<GitifySubject>);
+    });
+
+    it('links to the pull request, not an old comment, when the comment did not trigger it', async () => {
+      const mockPullRequest = mockPullRequestResponseNode({ state: 'OPEN' });
+      mockPullRequest.comments = {
+        totalCount: 1,
+        nodes: [
+          {
+            author: mockCommenter,
+            // Well outside the activity window of the notification's update time.
+            updatedAt: new Date(
+              Date.parse(mockNotification.updatedAt) - ACTIVITY_MATCH_WINDOW_MS - 60_000,
+            ).toISOString(),
+            url: 'https://github.com/gitify-app/notifications-test/pulls/123#issuecomment-1' as Link,
+            bodyText: 'An older comment',
+            reactions: { totalCount: 0 },
+            reactionGroups: noReactionGroups,
+          },
+        ],
+      };
+      fetchPullByNumberSpy.mockResolvedValue({
+        repository: { pullRequest: mockPullRequest },
+      } satisfies FetchPullRequestByNumberQuery);
+
+      const result = await pullRequestHandler.enrich(mockNotification);
+
+      expect(result.htmlUrl).toBe(mockPullRequest.url);
+      expect(result.latestActivity).toBeUndefined();
     });
 
     it('with comments', async () => {
@@ -1160,6 +1190,23 @@ describe('renderer/utils/notifications/handlers/pullRequest.ts', () => {
 
       const result = getReviewRequestTypes(nodes, undefined);
       expect(result).toEqual([]);
+    });
+  });
+
+  describe('isCurrentActivity', () => {
+    const at = '2026-01-01T17:00:00Z';
+
+    it('accepts activity inside the window, either side', () => {
+      expect(isCurrentActivity(at, '2026-01-01T16:58:00Z')).toBe(true);
+      expect(isCurrentActivity(at, '2026-01-01T17:02:59Z')).toBe(true);
+    });
+
+    it('rejects activity outside the window', () => {
+      expect(isCurrentActivity(at, '2026-01-01T16:56:00Z')).toBe(false);
+    });
+
+    it('accepts activity whose time cannot be parsed', () => {
+      expect(isCurrentActivity(at, 'not a date')).toBe(true);
     });
   });
 });

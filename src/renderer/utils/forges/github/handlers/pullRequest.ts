@@ -68,6 +68,13 @@ class PullRequestHandler extends DefaultHandler {
 
     const prComment = pr.comments?.nodes?.[0];
     const activity = getClosestPullRequestActivity(notification.updatedAt, pr);
+    // Only a comment or review that happened with the notification is what the
+    // notification is about; otherwise (a review request, merge or close) the
+    // link and banner point at the pull request itself.
+    const currentActivity =
+      activity && isCurrentActivity(notification.updatedAt, activity.timestamp)
+        ? activity
+        : undefined;
 
     const author = getNotificationAuthor([pr.author]);
     const commenter = getNotificationAuthor([prComment?.author]);
@@ -110,9 +117,9 @@ class PullRequestHandler extends DefaultHandler {
         ?.filter(Boolean)
         .map((issue) => ({ number: issue!.number, url: issue!.url })),
       milestone: pr.milestone ?? undefined,
-      htmlUrl: activity?.url ?? pr.url,
-      latestActivity: activity
-        ? { kind: activity.kind, text: activity.text, at: activity.timestamp }
+      htmlUrl: currentActivity?.url ?? pr.url,
+      latestActivity: currentActivity
+        ? { kind: currentActivity.kind, text: currentActivity.text, at: currentActivity.timestamp }
         : undefined,
       reactionsCount: prReactionCount,
       reactionGroups: prReactionGroup ?? undefined,
@@ -158,6 +165,29 @@ class PullRequestHandler extends DefaultHandler {
 }
 
 export const pullRequestHandler = new PullRequestHandler();
+
+/**
+ * A comment or review counts as what triggered a notification only when it
+ * happened this close to the notification's own update time. GitHub's
+ * notification reason says why you follow a thread, not what just happened,
+ * so this is how a review request is told apart from an earlier comment.
+ */
+export const ACTIVITY_MATCH_WINDOW_MS = 3 * 60 * 1000;
+
+/**
+ * Whether a comment or review happened together with a notification.
+ *
+ * @param notificationUpdatedAt - The notification's update time (ISO 8601).
+ * @param activityTimestamp - When the comment was updated or review submitted.
+ * @returns `true` within {@link ACTIVITY_MATCH_WINDOW_MS}, or when a time can't be parsed.
+ */
+export function isCurrentActivity(
+  notificationUpdatedAt: string,
+  activityTimestamp: string,
+): boolean {
+  const distance = Math.abs(Date.parse(activityTimestamp) - Date.parse(notificationUpdatedAt));
+  return Number.isNaN(distance) || distance <= ACTIVITY_MATCH_WINDOW_MS;
+}
 
 export function getClosestPullRequestActivity(
   notificationUpdatedAt: string,
