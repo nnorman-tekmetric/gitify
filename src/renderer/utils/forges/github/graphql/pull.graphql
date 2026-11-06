@@ -38,6 +38,7 @@ fragment PullRequestDetails on PullRequest {
     nodes {
       updatedAt
       url
+      bodyText
       author {
         ...AuthorFields
       }
@@ -114,8 +115,14 @@ fragment PullRequestReviewFields on PullRequestReview {
   state
   submittedAt
   url
+  bodyText
   author {
     ...AuthorFields
+  }
+  comments(first: 1) {
+    nodes {
+      bodyText
+    }
   }
 }
 

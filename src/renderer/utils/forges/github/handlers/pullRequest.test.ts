@@ -334,6 +334,7 @@ describe('renderer/utils/notifications/handlers/pullRequest.ts', () => {
             author: mockCommenter,
             updatedAt: mockNotification.updatedAt,
             url: 'https://github.com/gitify-app/notifications-test/pulls/123#issuecomment-1234' as Link,
+            bodyText: '  Looks good, one nit.  ',
             reactions: {
               totalCount: 0,
             },
@@ -380,9 +381,35 @@ describe('renderer/utils/notifications/handlers/pullRequest.ts', () => {
         milestone: undefined,
         htmlUrl:
           'https://github.com/gitify-app/notifications-test/pulls/123#issuecomment-1234' as Link,
+        latestActivity: {
+          kind: 'comment',
+          text: 'Looks good, one nit.',
+          at: mockNotification.updatedAt,
+        },
         reactionsCount: 0,
         reactionGroups: noReactionGroups,
       } satisfies Partial<GitifySubject>);
+    });
+
+    it('uses the first inline comment when a review has no summary text', () => {
+      const mockPullRequest = mockPullRequestResponseNode({ state: 'OPEN' });
+      mockPullRequest.comments.nodes = [];
+      mockPullRequest.reviews!.nodes = [
+        {
+          author: mockCommenter,
+          state: 'CHANGES_REQUESTED',
+          submittedAt: '2026-01-01T17:00:00Z',
+          url: 'https://github.com/example/repo/pull/123#pullrequestreview-9' as Link,
+          bodyText: '',
+          comments: { nodes: [{ bodyText: 'This needs a null check.' }] },
+        },
+      ];
+
+      const result = getClosestPullRequestActivity('2026-01-01T17:00:00Z', mockPullRequest);
+
+      expect(result?.kind).toBe('CHANGES_REQUESTED');
+      expect(result?.text).toBe('This needs a null check.');
+      expect(result?.url).toBe('https://github.com/example/repo/pull/123#pullrequestreview-9');
     });
 
     it('selects a Copilot review after an earlier Actions comment', async () => {
@@ -404,6 +431,7 @@ describe('renderer/utils/notifications/handlers/pullRequest.ts', () => {
             author: actionsAuthor,
             updatedAt: '2026-01-01T16:55:00Z',
             url: 'https://github.com/example/repo/pull/123#issuecomment-1' as Link,
+            bodyText: '',
             reactions: { totalCount: 2 },
             reactionGroups: noReactionGroups,
           },
@@ -417,6 +445,8 @@ describe('renderer/utils/notifications/handlers/pullRequest.ts', () => {
             state: 'COMMENTED',
             submittedAt: '2026-01-01T16:59:59Z',
             url: 'https://github.com/example/repo/pull/123#pullrequestreview-1' as Link,
+            bodyText: '',
+            comments: { nodes: [] },
           },
         ],
       };
@@ -615,6 +645,7 @@ describe('renderer/utils/notifications/handlers/pullRequest.ts', () => {
           author: mockCommenter,
           updatedAt: '2026-01-01T17:00:01Z',
           url: 'https://github.com/example/repo/pull/123#issuecomment-1' as Link,
+          bodyText: '',
           reactions: { totalCount: 3 },
           reactionGroups: noReactionGroups,
         },
@@ -625,6 +656,8 @@ describe('renderer/utils/notifications/handlers/pullRequest.ts', () => {
           state: 'COMMENTED',
           submittedAt: '2026-01-01T16:59:00Z',
           url: 'https://github.com/example/repo/pull/123#pullrequestreview-1' as Link,
+          bodyText: '',
+          comments: { nodes: [] },
         },
       ];
 
@@ -642,12 +675,16 @@ describe('renderer/utils/notifications/handlers/pullRequest.ts', () => {
           state: 'COMMENTED',
           submittedAt: '2026-01-01T16:59:45Z',
           url: 'https://github.com/example/repo/pull/123#pullrequestreview-1' as Link,
+          bodyText: '',
+          comments: { nodes: [] },
         },
         {
           author: mockAuthor,
           state: 'APPROVED',
           submittedAt: '2026-01-01T16:59:58Z',
           url: 'https://github.com/example/repo/pull/123#pullrequestreview-2' as Link,
+          bodyText: '',
+          comments: { nodes: [] },
         },
       ];
 
@@ -663,6 +700,7 @@ describe('renderer/utils/notifications/handlers/pullRequest.ts', () => {
           author: null,
           updatedAt: '2026-01-01T17:00:00Z',
           url: 'https://github.com/example/repo/pull/123#issuecomment-1' as Link,
+          bodyText: '',
           reactions: { totalCount: 0 },
           reactionGroups: noReactionGroups,
         },
@@ -673,6 +711,8 @@ describe('renderer/utils/notifications/handlers/pullRequest.ts', () => {
           state: 'COMMENTED',
           submittedAt: 'invalid timestamp',
           url: 'https://github.com/example/repo/pull/123#pullrequestreview-1' as Link,
+          bodyText: '',
+          comments: { nodes: [] },
         },
       ];
 
@@ -688,6 +728,7 @@ describe('renderer/utils/notifications/handlers/pullRequest.ts', () => {
           author: mockCommenter,
           updatedAt: '2026-01-01T16:59:59Z',
           url: 'https://github.com/example/repo/pull/123#issuecomment-1' as Link,
+          bodyText: '',
           reactions: { totalCount: 0 },
           reactionGroups: noReactionGroups,
         },
@@ -698,6 +739,8 @@ describe('renderer/utils/notifications/handlers/pullRequest.ts', () => {
           state: 'COMMENTED',
           submittedAt: '2026-01-01T17:00:01Z',
           url: 'https://github.com/example/repo/pull/123#pullrequestreview-1' as Link,
+          bodyText: '',
+          comments: { nodes: [] },
         },
       ];
 

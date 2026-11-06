@@ -434,6 +434,13 @@ export interface GitifySubject {
   subIssueProgress?: GitifySubIssueProgress;
   /** Deep link to notification thread */
   htmlUrl?: Link;
+  /**
+   * The latest activity on the subject (a comment or a review), used to show
+   * what actually happened in native notifications.
+   */
+  latestActivity?: GitifyLatestActivity;
+  /** Workflow and branch of a CI run, when the subject is a check suite */
+  ciRun?: GitifyCiRun;
   /** Reaction counts */
   reactionsCount?: number;
   /** Reaction groups */
@@ -545,6 +552,24 @@ export type GitifyReactionGroup = ReactionGroupFieldsFragment;
 export type GitifyLabels = LabelFieldsFragment;
 
 export type GitifyReviewDecision = PullRequestReviewDecision;
+
+/** What the latest activity on a subject was. */
+export type GitifyActivityKind = 'comment' | PullRequestReviewState;
+
+/** The latest comment or review on a subject, for native notification text. */
+export interface GitifyLatestActivity {
+  kind: GitifyActivityKind;
+  /** Plain-text body of the comment or review, when it has one */
+  text?: string;
+  /** When the comment was updated or the review submitted (ISO 8601) */
+  at?: string;
+}
+
+/** A CI run's workflow and branch, for native notification text. */
+export interface GitifyCiRun {
+  workflow: string;
+  branch: string;
+}
 
 export interface GitifyCheckSummary {
   state: 'SUCCESS' | 'FAILURE' | 'PENDING';

@@ -35,6 +35,9 @@ const config = {
     // through safeStorage, and Gitify keeps no cookies worth protecting.
   },
   files: ['assets/images/*', 'assets/sounds/*', 'build/**/*', 'LICENSE', 'package.json'],
+  // Notification badge icons live outside app.asar so macOS can read them as
+  // plain files when it attaches them to a banner.
+  extraResources: [{ from: 'assets/images/notifications', to: 'notifications' }],
   electronLanguages: ['en'],
   mac: {
     category: 'public.app-category.developer-tools',

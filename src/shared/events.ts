@@ -1,3 +1,5 @@
+import type { NativeNotificationIcon } from './nativeNotifications';
+
 const P = 'gitify:' as const;
 
 /**
@@ -137,6 +139,8 @@ export interface INativeNotificationPayload {
   body: string;
   /** Translated label for the single Mark as read action, when offered. */
   actionLabel?: string;
+  /** Badge icon attached to the notification (macOS shows it on the right). */
+  icon?: NativeNotificationIcon;
 }
 
 /** Payload for removing published notifications. */

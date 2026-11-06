@@ -298,6 +298,18 @@
     "stacked_pr_position": "Stacked pull request: {{position}} of {{depth}}"
   },
   "native": {
+    "activity_approved": "{{actor}} approved",
+    "activity_changes_requested": "{{actor}} requested changes",
+    "activity_commented": "{{actor}} commented",
+    "activity_dismissed": "{{actor}} dismissed a review",
+    "activity_reviewed": "{{actor}} reviewed",
+    "ci_branch": "Branch {{branch}}",
+    "ci_failed": "CI failed: {{workflow}}",
+    "ci_passed": "CI passed: {{workflow}}",
+    "pr_closed": "PR closed without merging",
+    "pr_merged": "PR merged",
+    "pull_request_by": "Pull request by @{{author}}",
+    "review_requested": "Your review was requested",
     "summary_body_other": "You have {{count}} notifications"
   },
   "notifications": {

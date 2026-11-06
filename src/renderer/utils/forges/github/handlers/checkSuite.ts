@@ -24,13 +24,15 @@ export interface CheckSuiteAttributes {
 
 class CheckSuiteHandler extends DefaultHandler {
   override enrich(notification: GitifyNotification): Partial<GitifySubject> {
-    const state = getCheckSuiteAttributes(notification)?.status;
+    const attributes = getCheckSuiteAttributes(notification);
+    const state = attributes?.status;
 
-    if (state) {
+    if (attributes && state) {
       return {
         state: state,
         user: undefined,
         htmlUrl: getCheckSuiteUrl(notification),
+        ciRun: { workflow: attributes.workflowName, branch: attributes.branchName },
       };
     }
 

@@ -13,6 +13,7 @@ import { differenceInMilliseconds } from 'date-fns/differenceInMilliseconds';
 
 import {
   type Account,
+  type GitifyActivityKind,
   type GitifyCheckSummary,
   type GitifyNotification,
   type GitifyPullRequestReviewer,
@@ -40,6 +41,8 @@ type PullRequestActivity = {
   author: AuthorFieldsFragment;
   timestamp: string;
   url: Link;
+  kind: GitifyActivityKind;
+  text?: string;
   comment?: NonNullable<NonNullable<PullRequestDetailsFragment['comments']['nodes']>[number]>;
 };
 
@@ -108,6 +111,9 @@ class PullRequestHandler extends DefaultHandler {
         .map((issue) => ({ number: issue!.number, url: issue!.url })),
       milestone: pr.milestone ?? undefined,
       htmlUrl: activity?.url ?? pr.url,
+      latestActivity: activity
+        ? { kind: activity.kind, text: activity.text, at: activity.timestamp }
+        : undefined,
       reactionsCount: prReactionCount,
       reactionGroups: prReactionGroup ?? undefined,
       checks: getCheckSummary(pr.statusCheckRollup),
@@ -169,6 +175,8 @@ export function getClosestPullRequestActivity(
         author: comment.author,
         timestamp: comment.updatedAt,
         url: comment.url,
+        kind: 'comment',
+        text: nonEmptyText(comment.bodyText),
         comment,
       });
     }
@@ -184,6 +192,9 @@ export function getClosestPullRequestActivity(
         author: review.author,
         timestamp: review.submittedAt,
         url: review.url,
+        kind: review.state,
+        // A review with no summary text often still has inline comments.
+        text: nonEmptyText(review.bodyText) ?? nonEmptyText(review.comments?.nodes?.[0]?.bodyText),
       });
     }
   }
@@ -375,4 +386,9 @@ export function getPullRequestReviewers(
   return Array.from(reviewers.values())
     .map(({ reviewer }) => reviewer)
     .sort((a, b) => a.user.localeCompare(b.user));
+}
+
+function nonEmptyText(text: string | null | undefined): string | undefined {
+  const trimmed = text?.trim();
+  return trimmed ? trimmed : undefined;
 }

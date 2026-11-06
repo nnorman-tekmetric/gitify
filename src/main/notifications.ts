@@ -1,4 +1,6 @@
-import { Notification } from 'electron';
+import path from 'node:path';
+
+import { app, Notification } from 'electron';
 import type { Menubar } from 'electron-menubar';
 
 import {
@@ -9,6 +11,10 @@ import {
   type INativeNotificationRemovePayload,
 } from '../shared/events';
 import { logError } from '../shared/logger';
+import {
+  isNativeNotificationIcon,
+  type NativeNotificationIcon,
+} from '../shared/nativeNotifications';
 
 import { sendRendererEvent } from './events';
 
@@ -64,6 +70,7 @@ export class NativeNotificationService {
       body,
       silent: true,
       actions: payload.actionLabel ? [{ type: 'button', text: payload.actionLabel }] : [],
+      ...(payload.icon ? { icon: getNotificationIconPath(payload.icon) } : {}),
     });
 
     notification.on('click', () => {
@@ -214,6 +221,10 @@ export function validateNativeNotificationPayload(payload: INativeNotificationPa
     return false;
   }
 
+  if (payload.icon !== undefined && !isNativeNotificationIcon(payload.icon)) {
+    return false;
+  }
+
   return (
     payload.actionLabel === undefined ||
     (typeof payload.actionLabel === 'string' &&
@@ -252,4 +263,18 @@ function readActionIndex(details: unknown, legacyActionIndex: unknown): number |
   }
 
   return undefined;
+}
+
+/**
+ * Resolve a badge icon name to its bundled PNG.
+ *
+ * @param icon - A name already checked against the known icon list.
+ * @returns The PNG's absolute path: `Resources/notifications/` in the packaged
+ *   app (outside app.asar), or `assets/images/notifications/` in development.
+ */
+export function getNotificationIconPath(icon: NativeNotificationIcon): string {
+  if (app?.isPackaged) {
+    return path.join(process.resourcesPath, 'notifications', `${icon}.png`);
+  }
+  return path.resolve(__dirname, 'assets', 'images', 'notifications', `${icon}.png`);
 }

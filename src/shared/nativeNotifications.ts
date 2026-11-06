@@ -4,6 +4,38 @@
 export const NATIVE_NOTIFICATION_SUMMARY_ID = 'summary';
 
 /**
+ * Badge icons a native notification can attach. Each name is a PNG in
+ * `assets/images/notifications/`. The main process only accepts these names,
+ * so the renderer can never point a notification at an arbitrary file.
+ */
+export const NATIVE_NOTIFICATION_ICONS = [
+  'tekmetric-git',
+  'issue-comment',
+  'bot-comment',
+  'pr-approved',
+  'changes-requested',
+  'review-requested',
+  'pr-merged',
+  'pr-closed-without-merge',
+  'ci-checks-passed',
+  'ci-checks-failed',
+] as const;
+
+export type NativeNotificationIcon = (typeof NATIVE_NOTIFICATION_ICONS)[number];
+
+/**
+ * Whether a value is one of the known notification badge icons.
+ *
+ * @param value - The value to check.
+ * @returns `true` when it names a bundled badge icon.
+ */
+export function isNativeNotificationIcon(value: unknown): value is NativeNotificationIcon {
+  return (
+    typeof value === 'string' && (NATIVE_NOTIFICATION_ICONS as readonly string[]).includes(value)
+  );
+}
+
+/**
  * Build the operating-system notification identity for a notification.
  *
  * Windows caps a toast tag at 64 characters, and account UUIDs plus thread IDs

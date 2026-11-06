@@ -24,6 +24,7 @@ describe('renderer/utils/notifications/handlers/checkSuite.ts', () => {
         user: undefined,
         htmlUrl:
           'https://github.com/gitify-app/notifications-test/actions?query=workflow%3A%22Demo%22+is%3Acancelled+branch%3Amain',
+        ciRun: { workflow: 'Demo', branch: 'main' },
       });
     });
 
@@ -50,6 +51,7 @@ describe('renderer/utils/notifications/handlers/checkSuite.ts', () => {
         user: undefined,
         htmlUrl:
           'https://github.com/gitify-app/notifications-test/actions?query=workflow%3A%22Demo%22+is%3Afailure+branch%3Amain',
+        ciRun: { workflow: 'Demo', branch: 'main' },
       });
     });
 
@@ -66,6 +68,7 @@ describe('renderer/utils/notifications/handlers/checkSuite.ts', () => {
         user: undefined,
         htmlUrl:
           'https://github.com/gitify-app/notifications-test/actions?query=workflow%3A%22Demo%22+is%3Askipped+branch%3Amain',
+        ciRun: { workflow: 'Demo', branch: 'main' },
       });
     });
 
@@ -82,6 +85,7 @@ describe('renderer/utils/notifications/handlers/checkSuite.ts', () => {
         user: undefined,
         htmlUrl:
           'https://github.com/gitify-app/notifications-test/actions?query=workflow%3A%22Demo%22+is%3Asuccess+branch%3Amain',
+        ciRun: { workflow: 'Demo', branch: 'main' },
       });
     });
 

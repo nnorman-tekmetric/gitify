@@ -41,12 +41,16 @@ vi.mock('electron', () => {
     }
   }
 
-  return { Notification: MockNotification };
+  return { app: { isPackaged: false }, Notification: MockNotification };
 });
 
-import { Notification } from 'electron';
+import { app, Notification } from 'electron';
 
-import { NativeNotificationService, validateNativeNotificationPayload } from './notifications';
+import {
+  getNotificationIconPath,
+  NativeNotificationService,
+  validateNativeNotificationPayload,
+} from './notifications';
 
 interface NotificationMock {
   id: string;
@@ -115,6 +119,42 @@ describe('main/notifications.ts', () => {
       silent: true,
       actions: [{ type: 'button', text: 'Mark as read' }],
     });
+  });
+
+  it('attaches the bundled badge icon when one is named', () => {
+    new NativeNotificationService(makeMenubar().mb, 'darwin').show({
+      ...basePayload,
+      icon: 'pr-approved',
+    });
+
+    expect(NotificationMock.instances[0].options).toMatchObject({
+      icon: getNotificationIconPath('pr-approved'),
+    });
+    expect(getNotificationIconPath('pr-approved')).toMatch(
+      /assets\/images\/notifications\/pr-approved\.png$/,
+    );
+  });
+
+  it('reads badge icons from Resources, outside app.asar, when packaged', () => {
+    const mutableApp = app as { isPackaged: boolean };
+    const proc = process as { resourcesPath?: string };
+    const previous = proc.resourcesPath;
+    mutableApp.isPackaged = true;
+    proc.resourcesPath = '/Applications/Gitify.app/Contents/Resources';
+    try {
+      expect(getNotificationIconPath('pr-merged')).toBe(
+        '/Applications/Gitify.app/Contents/Resources/notifications/pr-merged.png',
+      );
+    } finally {
+      mutableApp.isPackaged = false;
+      proc.resourcesPath = previous;
+    }
+  });
+
+  it('omits the icon when none is named', () => {
+    new NativeNotificationService(makeMenubar().mb, 'darwin').show(basePayload);
+
+    expect(NotificationMock.instances[0].options).not.toHaveProperty('icon');
   });
 
   it('folds the subtitle into the body off macOS', () => {
@@ -241,6 +281,15 @@ describe('main/notifications.ts', () => {
     );
     expect(
       validateNativeNotificationPayload({ ...basePayload, actionLabel: 1 as unknown as string }),
+    ).toBe(false);
+    expect(validateNativeNotificationPayload({ ...basePayload, icon: 'ci-checks-failed' })).toBe(
+      true,
+    );
+    expect(
+      validateNativeNotificationPayload({
+        ...basePayload,
+        icon: '../../secret' as unknown as 'pr-merged',
+      }),
     ).toBe(false);
   });
 });
